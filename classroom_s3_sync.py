@@ -1,6 +1,4 @@
 from __future__ import print_function
-import pickle
-import os
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
@@ -8,6 +6,10 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import pandas as pd
 import secrets
+import pickle
+import boto3
+import os
+
 
 # If modifying these scopes, delete the file token.pickle.
 COURSE_ID       = '41106374079' # Test Value
@@ -18,6 +20,9 @@ SCOPES          =   ['https://www.googleapis.com/auth/classroom.courses',
                      'https://www.googleapis.com/auth/classroom.student-submissions.students.readonly', 
                      'https://www.googleapis.com/auth/classroom.rosters',
                      'https://www.googleapis.com/auth/classroom.profile.emails']
+
+# AWS Configurations
+BUCKET_NAME     = 'soft-skill-assessment-project'
 
 
 def encrypt(student_id):
@@ -83,6 +88,19 @@ def getCourseList(classroom=None):
         print (course)
 
 
+def uploadToS3(path, bucket=None):
+    if bucket is None:
+        raise Exception('No bucket object was passed. Terminating script.')
+
+    for subdir, dirs, files in os.walk(path):
+        for file in files:
+            full_path = os.path.join(subdir, file)
+            with open(full_path, 'rb') as data:
+                bucket.put_object(Key=full_path[len(path)+1:], Body=data)
+
+    print ("All Files and Subfolders in the path `{}` are uploaded to S3 Bucket.".format(path))
+
+
 def downloadAssignment(submission, assignment, student_id, drive=None):
     try:
         os.makedirs(os.path.join(DATA_FOLDER, assignment, student_id))  # Create Directories
@@ -107,6 +125,8 @@ def main():
     # Google APIs
     classroom   = getClassroom()
     drive       = getDrive()
+    s3          = boto3.resource('s3')
+    bucket      = s3.Bucket(BUCKET_NAME)
 
     # getCourseList()
 
@@ -129,6 +149,8 @@ def main():
             print ("\t{}. {} | {}".format(j+1, student['profile']['name']['fullName'], student['profile']['emailAddress']))
 
             downloadAssignment(submission['assignmentSubmission'], assignment['title'], encrypt(student['profile']['emailAddress'].split('@')[0]), drive=drive)
+
+    uploadToS3(DATA_FOLDER, bucket=bucket)
 
 
 
