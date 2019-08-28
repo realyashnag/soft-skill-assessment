@@ -79,13 +79,18 @@ def getClassroom():
     return service
 
 
-def getCourseList(classroom=None):
+def getCourseID(classroom=None):
     if (classroom is None):
         classroom = getClassroom()
     courses = classroom.courses().list(pageSize=10).execute()['courses']
 
-    for course in courses:
-        print (course)
+    print ("Following are the list of courses associated with your account:")
+    for i, course in enumerate(courses):
+        print ("{}. {} | {} | {}".format(i+1, course['name'], course['courseState'], course['descriptionHeading']))
+
+    print ("\nSelect (input the number of) the course you'd like to fetch data from...")
+    selection = int(input())
+    return courses[selection-1]['id']
 
 
 def uploadToS3(path, bucket=None):
@@ -127,8 +132,7 @@ def main():
     drive       = getDrive()
     s3          = boto3.resource('s3')
     bucket      = s3.Bucket(BUCKET_NAME)
-
-    # getCourseList()
+    COURSE_ID   = getCourseID(classroom=classroom)
 
     courseWork = classroom.courses().courseWork().list(
             courseId=COURSE_ID).execute()['courseWork']
@@ -151,7 +155,6 @@ def main():
             downloadAssignment(submission['assignmentSubmission'], assignment['title'], encrypt(student['profile']['emailAddress'].split('@')[0]), drive=drive)
 
     uploadToS3(DATA_FOLDER, bucket=bucket)
-
 
 
 if __name__ == '__main__':
