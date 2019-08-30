@@ -6,9 +6,10 @@ Script `classroom_s3_sync.py` downloads all the student submissions for all assi
 1. **Enable Classroom API** from [here](https://developers.google.com/classroom/quickstart/python).
 2. Download _credentials.json_ file from the above link and save it.
 3. Install dependencies `pip install -r requirements.txt`.
-4. Replace **COURSE_ID** in the script to target course's id.
 5. Run the script from the same folder as the downloaded file.
+6. Choose the _course_ you'd like to download the assignments from.
+
+Downloads will be in the ___DATA_FOLDER___ of in the root directory.
 
 Note: 
-1. Course ID is hardcorded in the script.
-2. AWS CLI must be configured to upload files to S3 Bucket.
+1. AWS CLI must be configured to upload files to S3 Bucket.
