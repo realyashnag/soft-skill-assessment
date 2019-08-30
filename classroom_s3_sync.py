@@ -26,6 +26,10 @@ BUCKET_NAME     = 'soft-skill-assessment-project'
 
 
 def encrypt(student_id):
+    """
+    Returns a randomly generated string to replace 'student_id'. Mappings from
+    student_id --> random string is stored in 'mappings.csv'.
+    """
     mapped_id = secrets.token_hex(4)
 
     # Update Student Id --> Random Number Mappings
@@ -50,6 +54,9 @@ def encrypt(student_id):
 
 
 def getDrive():
+    """
+    Get Google Drive Object for Drive operations.
+    """
     if os.path.exists('token_drive.pickle'):
         with open('token_drive.pickle', 'rb') as token:
             gauth = pickle.load(token)
@@ -64,6 +71,9 @@ def getDrive():
 
 
 def getClassroom():
+    """
+    Get Google Classroom Object for Classroom navigation operations.
+    """
     if os.path.exists('token_classroom.pickle'):
         with open('token_classroom.pickle', 'rb') as token:
             creds = pickle.load(token)
@@ -80,6 +90,10 @@ def getClassroom():
 
 
 def getCourseID(classroom=None):
+    """
+    Lists all the courses associated with the logged-in google classroom account. User 
+    can choose which course's id to return. 
+    """
     if (classroom is None):
         classroom = getClassroom()
     courses = classroom.courses().list(pageSize=10).execute()['courses']
@@ -94,6 +108,9 @@ def getCourseID(classroom=None):
 
 
 def uploadToS3(path, bucket=None):
+    """
+    Uploads all subfolders of `DATA_FOLDER` folder to S3 Bucket
+    """
     if bucket is None:
         raise Exception('No bucket object was passed. Terminating script.')
 
@@ -107,6 +124,10 @@ def uploadToS3(path, bucket=None):
 
 
 def downloadAssignment(submission, assignment, student_id, drive=None):
+    """
+    Downloads all attachments from submission per student, with respect to the assignmnet, before encrypting
+    student ids.
+    """
     try:
         os.makedirs(os.path.join(DATA_FOLDER, assignment, student_id))  # Create Directories
     except:
@@ -127,6 +148,10 @@ def downloadAssignment(submission, assignment, student_id, drive=None):
 
 
 def main():
+    """
+    Task: Download all submissions from students (whose ids will be mapped with a random string) 
+    to local storage, and then later uploaded to S3 Bucket.
+    """
     # Google APIs
     classroom   = getClassroom()
     drive       = getDrive()
