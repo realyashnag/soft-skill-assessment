@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="row">
+        <!-- Home Page -->
+        <div class="col-md-8">
+            <h1>About The Project</h1><br>
+            <p>The project <strong>Skill Assessment</strong> is an extension of a broader vision of  <i>Dr. Philip L. Miller</i> to revolutionize 
+                software developers evaluation and an authentic way to determine the competency of a software developer through authentic examination of their coding skills. <br><br>
+                This project is conducted in his tenure at <a href="https://www.lnmiit.ac.in/">The LNM Institute of Technology</a> in Jaipur, India. Dr. Miller is accompained by graduate student
+                <i>Yash Nag</i> from <i>The LNMIIT</i>.  </p><br><br>
+
+            <div class="row">
+                <div class="col-md-8"></div>
+                <div class="col-md-4">
+                    <img src="{{ url_for('static', filename='professor.jpg') }}">
+                    <br>
+                    <p>Dr. Philip L. Miller</p>
+                    <p class='text-muted' style="font-size:80%;">Visiting Professor, The LNMIIT <br> Founder, Proxor Limited<br> Former Professor, Carnegie Mellon University</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
