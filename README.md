@@ -1,6 +1,9 @@
 # Software Developer Skill Assessment
 Grand Idea is to create a model which, through expert-created examination's evaluation of a software developer, can predict their competency and skill level. Currently exploratory in nature.
 
+## Web Application
+Hosted on AWS EC2 (Free Tier), can be found here - [Website Link](http://18.191.227.197/).
+
 ## Assignment Sync
 Script `classroom_s3_sync.py` downloads all the student submissions for all assignments of the mentioned course, and uploads them to S3 Bucket. 
 1. **Enable Classroom API** from [here](https://developers.google.com/classroom/quickstart/python).
