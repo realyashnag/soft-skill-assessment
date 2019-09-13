@@ -1,0 +1,188 @@
+{% extends "layout.html" %}
+{% block content %}
+    <p>
+        Complete Spreadsheet (Google Sheet) can be found on this Link: <a href="https://docs.google.com/spreadsheets/d/15uyeG2oie6u-VHr7MhqzUVhYYLZ9JxLaFiYzLFx7Alg/edit?usp=sharing">Link to Spreadsheet</a>
+    </p>
+
+    <div class="row">
+        <div class="col-md-7">
+            <!-- Vertical Bar Graph -->
+            <div class="row">
+                <h1>Program Constituent KUs</h1>
+                <p>The bar chart shows the number of Knowledge Units (KUs) constituted by each task.</p>
+                <canvas id="KUsPerTask" width="600" height="400"></canvas>
+            </div>
+            <!-- Horizontal Bar Graph -->
+            <div class="row">
+                <h1>KUs Distribution</h1>
+                <p>Distribution of Knowledge Units (KUs) completed by tasks, with respect to total KUs.</p>
+                <canvas id="KUDistribution" width="600" height="400"></canvas> 
+            </div>
+        </div>
+        <div class="col-md-5">
+            <!-- List of Programs and their KUs -->
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-light">Total KUs (in Usage): <strong>{{ metrics.PROGRAM_KU['TOTAL_KU'] }}</strong></li>
+            </ul>
+
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">Task</th>
+                        <th scope="col">Knowledge Units (KU)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in metrics.PROGRAM_KU['KU_PER_TASK'] %}
+                        <tr>
+                            <td>{{ item[0] }}</td>
+                            <td><strong>{{ item[1] }}</strong></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- <ul class="list-group">
+                <br><br>
+                <li class="list-group-item list-group-item-light">Total KUs (in Usage): <strong>{{ metrics.PROGRAM_KU['TOTAL_KU'] }}</strong></li>
+                {% for item in metrics.PROGRAM_KU['KU_PER_TASK'] %}
+                    <li class="list-group-item list-group-item-light"> {{ item[0] }}: <strong>{{ item[1] }}</strong></li>
+                {% endfor %}
+            </ul> -->
+        </div>
+    </div><br><br>
+
+    <script>
+        // ================== Global Parameters
+        Chart.defaults.global.responsive = false;
+        function getColor(n) {
+            n = parseInt(n)
+            colors = []
+            for (x=0; x<n; x++) {
+                // colors.push('#'+(Math.random()*0xFFFFFF<<0).toString(16));
+                var letters = 'BCDEF'.split('');
+                var color = '#';
+                for (var i = 0; i < 6; i++ ) {
+                    color += letters[Math.floor(Math.random() * letters.length)];
+                }
+                colors.push(color);
+            }
+            return colors
+        }
+
+
+        // ================== KUs Per Task (Bar Chart)
+        var barOptions_stacked = {
+            scales: {
+                xAxes: [{
+                    ticks: {
+                        suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                        // OR //
+                        beginAtZero: true   // minimum value will be 0.
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                        // OR //
+                        beginAtZero: true   // minimum value will be 0.
+                    }
+                }]
+            },
+            legend:{
+                display:true
+            }
+        };
+        var KuPerTaskData = {
+            labels : [{% for item in metrics.PROGRAM_KU['TASK_LABELS'] %}
+                        "{{item}}",
+                        {% endfor %}],
+            datasets : [{
+                label: "{{ metrics.PROGRAM_KU['LEGEND'] }}",
+                fill: true,
+                lineTension: 0.1,
+                backgroundColor: "rgba(75,192,192,0.4)",
+                borderColor: "rgba(75,192,192,1)",
+                borderCapStyle: 'butt',
+                borderDash: [],
+                borderDashOffset: 0.0,
+                borderJoinStyle: 'miter',
+                pointBorderColor: "rgba(75,192,192,1)",
+                pointBackgroundColor: "#fff",
+                pointBorderWidth: 1,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: "rgba(75,192,192,1)",
+                pointHoverBorderColor: "rgba(220,220,220,1)",
+                pointHoverBorderWidth: 2,
+                pointRadius: 1,
+                pointHitRadius: 10,
+                data : [{% for item in metrics.PROGRAM_KU['TASK_KU'] %}
+                            {{item}},
+                        {% endfor %}],
+                spanGaps: false
+            }]
+        }
+        var ctx = document.getElementById("KUsPerTask").getContext("2d");
+        var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: KuPerTaskData,
+            options: barOptions_stacked,
+        });
+
+
+        // ================== KUs Distribution (Horizontal Bar Chart)
+        var barOptions_stacked = {
+            scales: {
+                xAxes: [{
+                    ticks: {
+                        suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                        // OR //
+                        beginAtZero: true   // minimum value will be 0.
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        suggestedMin: 0,    // minimum will be 0, unless there is a lower value.
+                        // OR //
+                        beginAtZero: true   // minimum value will be 0.
+                    }
+                }]
+            },
+            legend:{
+                display:true
+            }
+        };
+        var ctx = document.getElementById("KUDistribution");
+        var KuDistributionData = {
+            labels : ["All Tasks\nUnique KUs", "Total KUs"],
+            datasets : [{
+                label: "{{ metrics.KU_DISTRIBUTION['LEGEND'] }}",
+                fill: true,
+                lineTension: 0.1,
+                backgroundColor: "rgba(75,192,192,0.4)",
+                borderColor: "rgba(75,192,192,1)",
+                borderCapStyle: 'butt',
+                borderDash: [],
+                borderDashOffset: 0.0,
+                borderJoinStyle: 'miter',
+                pointBorderColor: "rgba(75,192,192,1)",
+                pointBackgroundColor: "#fff",
+                pointBorderWidth: 1,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: "rgba(75,192,192,1)",
+                pointHoverBorderColor: "rgba(220,220,220,1)",
+                pointHoverBorderWidth: 2,
+                pointRadius: 1,
+                pointHitRadius: 10,
+                data : [ {{ metrics.KU_DISTRIBUTION['TASKS_UNIQUE_KU'] }}, {{ metrics.KU_DISTRIBUTION['TOTAL_KU'] }} ],  
+                spanGaps: false
+            }]
+        }
+
+        var myChart = new Chart(ctx, {
+            type: 'horizontalBar',
+            data: KuDistributionData,
+            options: barOptions_stacked,
+        });
+    </script>
+{% endblock content %}

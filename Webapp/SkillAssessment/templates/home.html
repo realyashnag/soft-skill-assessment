@@ -40,7 +40,7 @@
             <p class='text-muted'>Tasks currently undergoing or completed
               <ul class="list-group">
                 <li class="list-group-item list-group-item"><input type="checkbox" disabled> Scripts to identify if KU is satisfied</li>
-                <li class="list-group-item list-group-item-light"><input type="checkbox" disabled><a href="https://docs.google.com/spreadsheets/d/15uyeG2oie6u-VHr7MhqzUVhYYLZ9JxLaFiYzLFx7Alg/edit?usp=sharing"> Assign KU to C Programs</a></li>
+                <li class="list-group-item list-group-item-light"><input type="checkbox" disabled><a href="{{ url_for('showProxorCExamResults') }}"> Assign KU to C Programs</a></li>
                 <li class="list-group-item list-group-item-light"><input type="checkbox" checked="checked" disabled> Develop Introductory Website</li>
                 <li class="list-group-item list-group-item-light"><input type="checkbox" checked="checked" disabled> Conceptualize Tasks</li>
               </ul>
@@ -48,6 +48,6 @@
           </div>
         </div>
     </div>
-    
+
 {% endblock content %}
 
