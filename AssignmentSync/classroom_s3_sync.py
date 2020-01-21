@@ -13,6 +13,7 @@ import secrets
 import pickle
 import boto3
 import gnupg
+import glob
 import os
 
 
@@ -251,18 +252,12 @@ if __name__ == '__main__':
 
     print ("~~~~~ Operation Started ~~~~~")
 
-    TARGET_EMAIL = str(args.email).strip()
-
     if (args.encrypt):
         # Encrypt Task
-        if (args.email == '' or args.email is None):
-            # No Email is Passed
-            print ("No Receipient Email was passed. Use '--email' to pass Recipient's Email.")
-            print ("~~~~~ Operation Ended ~~~~~")
-            quit()
-        else:
-            print ("Proceeding with Downloading Assignments, Creating/Updating and Encrypting Mappings and Uploading to S3 Bucket.\n")
-            main()
+        print ("Proceeding with Downloading Assignments, Creating/Updating and Encrypting Mappings and Uploading to S3 Bucket.\n")
+        if (args.email != '' and args.email is not None):
+            TARGET_EMAIL = str(args.email).strip()
+        main()
     elif (args.decrypt):
         # Decrypt Task
         if (args.file == '' or args.file is None or args.passphrase == '' or args.passphrase is None):
