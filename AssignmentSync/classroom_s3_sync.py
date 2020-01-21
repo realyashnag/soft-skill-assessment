@@ -7,10 +7,10 @@ from google.auth.transport.requests import Request
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 import pandas as pd
+import argparse
 import datetime
 import secrets
 import pickle
-import shutil
 import boto3
 import gnupg
 import os
@@ -29,18 +29,19 @@ SCOPES                  =  ['https://www.googleapis.com/auth/classroom.courses',
 # AWS Configurations
 BUCKET_NAME             = 'soft-skill-assessment-project'
 CREDENTIALS_FILE_PATH   = 'client_secrets.json'
-TARGET_EMAIL            = 'random@email.com'
+TARGET_EMAIL            = 'philip.miller@lnmiit.ac.in' # Default Value for Recipient Email, Is overridden by '--email' argument's value
 
 
 def encrypt(filename):
     """
-    Encrypt 'Mappings' file through public key of 'TARGET_EMAIL', and return the path of encrypted file.
+    Encrypt 'Mappings' file, which can be unlocked only through private key of 'TARGET_EMAIL', and return the path of encrypted file.
     """
     gpg = gnupg.GPG()
-    encrypted_filename = filename+'_'+ datetime.datetime.now().strftime("%d-%b-%Y_%I:%M%p") +'.gpg'
+    encrypted_filename = filename+'_'+ datetime.datetime.now().strftime("%d-%b-%Y") +'.gpg'
+
 
     print('~'*60)
-    print("Encrypting File: {}".format(filename))
+    print("Encrypting File: {} using Public Key of {}".format(filename, TARGET_EMAIL))
     with open(filename, 'rb') as f:
         status = gpg.encrypt_file(
                 file=f,
@@ -48,7 +49,6 @@ def encrypt(filename):
                 output=encrypted_filename
         )
     print("Operation Success: ", status.ok)
-    print("File Encrypted using Public Key of {}".format(TARGET_EMAIL))
     print(status.status)
     print(status.stderr)
     print('~'*60)
@@ -159,16 +159,6 @@ def uploadToS3(path, bucket=None):
     print ("All Files and Subfolders in the path `{}` are uploaded to S3 Bucket.".format(path))
 
 
-def remove(arr):
-    for path in arr:
-        if os.path.isfile(path):
-            print ("Deleting File '{}'".format(path))
-            os.remove(path)
-        else:
-            print ("Deleting Tree '{}'".format(path))
-            shutil.rmtree(path)
-
-
 def downloadAssignment(submission, assignment, student_id, drive=None):
     """
     Downloads all attachments from submission per student, with respect to the assignmnet, before encrypting
@@ -198,7 +188,6 @@ def main():
     Task: Download all submissions from students (whose ids will be mapped with a random string) 
     to local storage, and then upload to S3 Bucket.
     """
-    print ("~~~~~ Operation Started ~~~~~")
 
     # Google APIs
     classroom   = getClassroom()
@@ -230,15 +219,75 @@ def main():
     encrypted_filename = encrypt(MAPPINGS_FILE)
     uploadToS3(encrypted_filename, bucket=bucket)
     uploadToS3(DATA_FOLDER, bucket=bucket)
-    remove([MAPPINGS_FILE, DATA_FOLDER])
+
+
+def decrypt(filepath, passphrase):
+    """
+    Decrypt passed 'filepath' and output decrypted file. Note that the recipient's private key must be present in the system.
+    """
+
+    print('~'*60)
+
+    gpg = gnupg.GPG()
+    with open(filepath, 'rb') as f:
+        status = gpg.decrypt_file(f, 
+                    passphrase=passphrase, 
+                    output='mappings.csv')
+    print (status.ok)
+    print (status.status)
+    print (status.stderr)
+    print('~'*60)
+
+
+if __name__ == '__main__':
+    # Passed arguments handling
+    parser = argparse.ArgumentParser(description='Google Classroom Handler')
+    parser.add_argument('-e','--email', help='Email of the Recipient (Public Key of the recipient must exist in the system)')
+    parser.add_argument('-f', '--file', help='Path for the file to be decrypted')
+    parser.add_argument('-p', '--passphrase', help='Passphrase for Decryption.')
+    parser.add_argument('--encrypt', help='Download assignments and perform encryption', action='store_true')
+    parser.add_argument('--decrypt', help='Perform decryption of the passsed file (-f Argument required)', action='store_true')
+    args = parser.parse_args()
+
+    print ("~~~~~ Operation Started ~~~~~")
+
+    TARGET_EMAIL = str(args.email).strip()
+
+    if (args.encrypt):
+        # Encrypt Task
+        if (args.email == '' or args.email is None):
+            # No Email is Passed
+            print ("No Receipient Email was passed. Use '--email' to pass Recipient's Email.")
+            print ("~~~~~ Operation Ended ~~~~~")
+            quit()
+        else:
+            print ("Proceeding with Downloading Assignments, Creating/Updating and Encrypting Mappings and Uploading to S3 Bucket.\n")
+            main()
+    elif (args.decrypt):
+        # Decrypt Task
+        if (args.file == '' or args.file is None or args.passphrase == '' or args.passphrase is None):
+            # No File is Passed
+            print ("No File Path or Passphrase was passed. Use '--path' to pass the file and '--passphrase' to pass your passphrase for the file to be decrypted.")
+            print ("~~~~~ Operation Ended ~~~~~")
+            quit()
+        else:
+            print ("Proceeding with Decrypting passed file.\n")
+            decrypt(str(args.file).strip(), str(args.passphrase).strip())
+    else:
+        print ("No Task argument passed. Use '--encypt' or '-decrypt' to perform respective operations.")
 
     print ("~~~~~ Operation Ended ~~~~~")
 
 
-if __name__ == '__main__':
-    main()
+# ---------------------------------- Steps -----------------------------------
+# - Generate Key/Value pair using GPG Command Line
+# - Setup AWS CLI
+# - Run the script (Encryption)
+# - Before re-running the 'encrypt' script, run 'decrypt' script to decrypt 'Mappings.csv' and then re-run the 'encrypt' script
+#
 
 # -------------------------------- Commands ----------------------------------
+# 
 # Enable API and Get credentials.json:
 # https://developers.google.com/classroom/quickstart/python
 #
@@ -253,5 +302,17 @@ if __name__ == '__main__':
 #
 # Decrypt FILE:
 # gpg --output output_file_name.txt --decrypt file_to_decrypt.gpg
+#
+# List KEYS:
+# gpg --list-secret-keys --keyid-format LONG
+# 
 
 
+# ------------------------------ Usage Exaamples -----------------------------
+# 
+# For Encryption:
+# python classroom_download.py --encrypt --email "random@email.com"
+#
+# For Decryption:
+# python classroom_download.py --decrypt --file "mappings.csv_21-Jan-2020.gpg" --passphrase "temp1234"
+#
